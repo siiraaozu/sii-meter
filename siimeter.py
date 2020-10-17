@@ -17,8 +17,8 @@ import time
 import json
 
 import os
-#os.chdir(os.path.dirname(os.path.abspath(__file__))) #pyで実行時
-os.chdir(os.path.dirname(os.path.abspath("__file__"))) #exe化時
+os.chdir(os.path.dirname(os.path.abspath(__file__))) #pyで実行時
+#os.chdir(os.path.dirname(os.path.abspath("__file__"))) #exe化時
 
 #桁と色，寸法の定義
 color = ["b", "y", "p", "br", "g", "w"]
