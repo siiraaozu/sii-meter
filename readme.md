@@ -1,4 +1,4 @@
-# シイメーター ver3.1(tkinter ver)
+# シイメーター ver3.1.1(tkinter ver)
 作成者:はこね(@sii_meter)
 ## はじめに
 しいらちゃん専用お仕事回数カウンター『シイメーター』のGUIアプリが完成しました！
@@ -69,8 +69,9 @@ data_oshigoto.txtには日付毎のお仕事回数が記録されます。**そ�
 これは設定ファイルです。原則いじらないでください。
 
 ## バージョン履歴
-- ver3.1 解像度の更新、終了時の画面の変更、Ctrl+Sでのお仕事回数保存が可能に
-- ver3.0 github,BOOTHに公開
+- ver.3.1.1 タイトルバー表示の変更, バグ修正, 例外処理
+- ver.3.1 解像度の更新、終了時の画面の変更、Ctrl+Sでのお仕事回数保存が可能に
+- ver.3.0 github,BOOTHに公開
 
 ## ライセンス
 This software is released under the MIT License, see LICENSE.txt.
