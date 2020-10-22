@@ -41,7 +41,7 @@ class Meter(tk.Frame):
         super().__init__(master)
 
         self.pack()
-        self.master.title("SII-METER ver3.0")
+        self.master.title("SII-METER ver3.1")
 
         self.import_data()
         self.load_num()
@@ -304,8 +304,12 @@ class Meter(tk.Frame):
             l += [str(date.today()) + " " + str(self.num) + "\n"]
 
         print(l)
-        with open('data_oshigoto.txt',mode='w',encoding='utf-8') as f:
-            f.write("".join(l))
+        try:
+            with open('data_oshigoto.txt',mode='w',encoding='utf-8') as f:
+                f.write("".join(l))
+        except PermissionError:
+            messagebox.showerror('エラー', 'data_oshigoto.txtへのアクセスが拒否されました。')
+            
 
     def close_save(self,save):
         if save:
@@ -331,6 +335,9 @@ class Meter(tk.Frame):
     def event_save(self, event):
         if self.bln2.get():
             self.save_txt()
+            self.master.title("SII-METER ver3.1 - 保存しました")
+            time.sleep(1)
+            self.master.title("SII-METER ver3.1")
 
 
 # 回数の読み込み
