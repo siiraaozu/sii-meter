@@ -17,8 +17,8 @@ import time
 import json
 
 import os
-os.chdir(os.path.dirname(os.path.abspath(__file__))) #pyで実行時
-#os.chdir(os.path.dirname(os.path.abspath("__file__"))) #exe化時
+#os.chdir(os.path.dirname(os.path.abspath(__file__))) #pyで実行時
+os.chdir(os.path.dirname(os.path.abspath("__file__"))) #exe化時
 
 #桁と色，寸法の定義
 color = ["b", "y", "p", "br", "g", "w"]
@@ -239,7 +239,7 @@ class Meter(tk.Frame):
 
     #ショートカットによるお仕事回数操作
     def add_num_main(self,num):
-        if self.bln.get():
+        if self.bln.get() and self.num + num > 0 and self.num + num < 1000000:
             digits_p = self.digits
             self.num += num
             self.load_num()
