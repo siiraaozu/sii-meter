@@ -1,5 +1,5 @@
 #coding:utf-8
-
+#次の修正点:設定画面で正の整数エラー→×ボタンの時にillegalな整数を更新する
 #GUI
 import tkinter as tk
 #コンボボックスで使用
@@ -41,7 +41,7 @@ class Meter(tk.Frame):
         super().__init__(master)
 
         self.pack()
-        self.master.title("SII-METER ver3.1")
+        self.master.title("SII-METER ver.3.1.2")
 
         self.import_data()
         self.load_num()
@@ -289,7 +289,7 @@ class Meter(tk.Frame):
     def save_txt(self):
         with open('data_oshigoto.txt',mode='r',encoding='utf-8') as f:
             l = f.readlines()
-        
+
         if l:
             latest_num = l[-1].split()
             if latest_num[0] == str(date.today()):
@@ -298,7 +298,6 @@ class Meter(tk.Frame):
             else:
                 print("add today's number")
                 l += [str(date.today()) + " " + str(self.num) + "\n"]
-
         else: #ファイルが空
             print("add today's number(create)")
             l += [str(date.today()) + " " + str(self.num) + "\n"]
@@ -314,7 +313,6 @@ class Meter(tk.Frame):
     def close_save(self,save):
         if save:
             self.save_txt()
-            
             self.data["oshigoto"] = self.num
         
         self.data["shortcut"] = self.bln.get()
@@ -335,9 +333,12 @@ class Meter(tk.Frame):
     def event_save(self, event):
         if self.bln2.get():
             self.save_txt()
-            self.master.title("SII-METER ver3.1 - 保存しました")
+            self.data["oshigoto"] = self.num #新たに修正した箇所
+            with open('data.json',mode='w',encoding='utf-8') as f:
+                json.dump(self.data, f, indent=4, ensure_ascii=False)
+            self.master.title("SII-METER ver.3.1.2 - 保存しました")
             time.sleep(1)
-            self.master.title("SII-METER ver3.1")
+            self.master.title("SII-METER ver.3.1.2")
 
 
 # 回数の読み込み
