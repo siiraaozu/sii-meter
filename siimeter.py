@@ -1,5 +1,6 @@
 #coding:utf-8
-#次の修正点:設定画面で正の整数エラー→×ボタンの時にillegalな整数を更新する
+
+#ver3.1.3保存機能増やした
 #GUI
 import tkinter as tk
 #コンボボックスで使用
@@ -33,7 +34,7 @@ y1 = 31
 def point_img(digit, window_x):
     return [(window_x-x1r)-(x_img+interval)*(digit), y1]
 
-
+ver = "3.2"
 #シイメーターオブジェクト
 class Meter(tk.Frame):
     def __init__(self, master):
@@ -41,10 +42,10 @@ class Meter(tk.Frame):
         super().__init__(master)
 
         self.pack()
-        self.master.title("SII-METER ver.3.1.2")
+        self.master.title("SII-METER ver."+ver)
 
         self.import_data()
-        self.load_num()
+        self.num_to_panel()
         self.create_canvas()
         self.create_panel()
 
@@ -62,7 +63,7 @@ class Meter(tk.Frame):
     
     #メンバ変数の数字->桁数,画像ファイル
     #使用:①開始時　②更新時　③ショートカット回数操作時
-    def load_num(self):
+    def num_to_panel(self):
         self.digits = int(math.log10(self.num))+1
         img = []
         num = self.num
@@ -98,8 +99,10 @@ class Meter(tk.Frame):
         if self.wrap == 0:
             img_siira = Image.open(r'panel\defalt3.1.png')
         elif self.wrap == 1:
-            img_siira = Image.open(r'panel\transparent.png')
+            img_siira = Image.open(r'panel\defalt2_3.1.png')
         elif self.wrap == 2:
+            img_siira = Image.open(r'panel\transparent.png')
+        elif self.wrap == 3:
             img_siira = Image.open(r'panel\maid3.1.png')
         img_siira = ImageTk.PhotoImage(img_siira)
 
@@ -132,6 +135,8 @@ class Meter(tk.Frame):
             self.canvas.create_image(p[0], p[1], image=imgs[digit], anchor=tk.NW)
 
     def create_config(self,event):
+        #設定ウィンドウを作り、メーターウィンドウの選択を禁ずる
+        # →ショートカットが使えなくなる
         self.config = tk.Toplevel(self)
         self.config.focus_set()
         self.config.grab_set()
@@ -180,14 +185,14 @@ class Meter(tk.Frame):
 
 
         #ラッピング変更
-        self.wraplist = ["デフォルト" , "バレンタイン", "メイド"]
+        self.wraplist = ["いつもの", "いつもの2", "バレンタイン", "メイド"]
 
         self.cb = ttk.Combobox(self.config, values=self.wraplist, state='readonly', width=10, font=font3)
         #self.cb.place(x=200, y=200) 
         self.cb.grid(column=0, row=0, padx=170, pady=56)
         self.cb.current(self.wrap)
       
-        self.chk = tk.Checkbutton(self.config, variable=self.bln, font=font4, text='ショートカットキー(Shift + Alt + ↑↓)\nを使ってメーター画面上で回数を操作する')
+        self.chk = tk.Checkbutton(self.config, variable=self.bln, font=font4, text='ショートカットキー(Ctrl + ↑↓)を使って\nメーター画面上で回数を操作する　　　　')
         self.chk.place(x=20, y=100)
 
         self.chk2 = tk.Checkbutton(self.config, variable=self.bln2, font=font4, text='ショートカットキー(Ctrl + S)でお仕事回数を保存する')
@@ -197,6 +202,7 @@ class Meter(tk.Frame):
         self.btn_reload = tk.Button(self.config, font=font2 ,text='更新') 
         self.btn_reload.place(x=150, y=210, width=160, height=40) 
         self.btn_reload.configure(command = self.reload) 
+
     
     def reload(self):
         try:
@@ -208,24 +214,43 @@ class Meter(tk.Frame):
 
             #推しごと回数
             num_tmp = int(self.entry.get())
-            self.num = num_tmp
-            digits_p = self.digits
-            self.load_num()
 
             #リロード
             #flag_canvasならば背景も変える
-            if num_tmp > 0:   
+            if num_tmp > 0 and num_tmp < 1000000:
                 self.config.destroy()
+
+                self.num = num_tmp
+                digits_p = self.digits
+                self.num_to_panel()
+
                 #桁数orラッピングの変更チェック
                 if self.digits != digits_p or self.wrap != wrap_p:
                     self.create_canvas()
                 self.create_panel()
+
+                #numがjsonに保存されているかどうか？
+                self.check_save()
+            elif num_tmp >= 1000000:
+                messagebox.showerror('エラー', '7桁以上は対応しておりません…',parent=self.config)
             else:
                 messagebox.showerror('エラー', '1以上を入力してください',parent=self.config)
         except ValueError:
             messagebox.showerror('エラー', '正の整数を入力してください！',parent=self.config)
         except IndexError:
             messagebox.showerror('エラー', '7桁以上は対応しておりません…',parent=self.config)
+    
+    def reload_meter(self):
+        digits_p = self.digits
+        self.num_to_panel()
+
+        #桁数orラッピングの変更チェック
+        if self.digits != digits_p:
+            self.create_canvas()
+        self.create_panel()
+
+        #numがjsonに保存されているかどうか？
+        self.check_save()
     
     #ボタンによるお仕事回数(entrybox)を操作
     def add_num(self, add):
@@ -240,12 +265,14 @@ class Meter(tk.Frame):
     #ショートカットによるお仕事回数操作
     def add_num_main(self,num):
         if self.bln.get() and self.num + num > 0 and self.num + num < 1000000:
-            digits_p = self.digits
             self.num += num
-            self.load_num()
-            if self.digits != digits_p:
-                self.create_canvas()
-            self.create_panel()
+            self.reload_meter()
+    
+    #お仕事回数を保存時に戻す
+    def undo_num(self, event):
+        self.num = self.data["oshigoto"]
+        #add_numと一緒
+        self.reload_meter()
 
 
     #はじめは空欄
@@ -260,31 +287,35 @@ class Meter(tk.Frame):
 
 
     def closing2(self):
-        self.close = tk.Toplevel(self)
-        self.close.focus_set()
-        self.close.grab_set()
+        if self.check_save():
+            #TFどっちでもいいが処理数削減のため
+            self.close_save(False)
+        else:
+            self.close = tk.Toplevel(self)
+            self.close.focus_set()
+            self.close.grab_set()
 
-        self.close.geometry("540x180")
-        self.close.title("Quit")
+            self.close.geometry("540x180")
+            self.close.title("Quit")
 
-        self.canvas = tk.Canvas(self.close,bg = "white", width=540, height=100)
-        self.canvas.place(x=0, y=0)
+            self.canvas = tk.Canvas(self.close,bg = "white", width=540, height=100)
+            self.canvas.place(x=0, y=0)
 
-        font3 = font.Font(family='Meiryo', size=9)
-        label = tk.Label(self.close, text="本日のお仕事回数をdata_oshigoto.txtに保存しますか？", font=font3 ,bg = "white")
-        label.place(x=20, y=50)
-        
-        self.btn_yes = tk.Button(self.close, font=font3 ,text='保存') 
-        self.btn_yes.place(x=140, y=120, width=120, height=36)
-        self.btn_yes.configure(command = lambda: self.close_save(True)) 
+            font3 = font.Font(family='Meiryo', size=9)
+            label = tk.Label(self.close, text="本日のお仕事回数をdata_oshigoto.txtに保存しますか？", font=font3 ,bg = "white")
+            label.place(x=20, y=50)
+            
+            self.btn_yes = tk.Button(self.close, font=font3 ,text='保存') 
+            self.btn_yes.place(x=140, y=120, width=120, height=36)
+            self.btn_yes.configure(command = lambda: self.close_save(True)) 
 
-        self.btn_no = tk.Button(self.close, font=font3 ,text='保存しない') 
-        self.btn_no.place(x=270, y=120, width=120, height=36)
-        self.btn_no.configure(command = lambda: self.close_save(False)) 
+            self.btn_no = tk.Button(self.close, font=font3 ,text='保存しない') 
+            self.btn_no.place(x=270, y=120, width=120, height=36)
+            self.btn_no.configure(command = lambda: self.close_save(False)) 
 
-        self.btn_cancel = tk.Button(self.close, font=font3 ,text='キャンセル') 
-        self.btn_cancel.place(x=400, y=120, width=120, height=36)
-        self.btn_cancel.configure(command = self.close_cancel) 
+            self.btn_cancel = tk.Button(self.close, font=font3 ,text='キャンセル') 
+            self.btn_cancel.place(x=400, y=120, width=120, height=36)
+            self.btn_cancel.configure(command = self.close_cancel) 
 
     def save_txt(self):
         with open('data_oshigoto.txt',mode='r',encoding='utf-8') as f:
@@ -336,9 +367,21 @@ class Meter(tk.Frame):
             self.data["oshigoto"] = self.num #新たに修正した箇所
             with open('data.json',mode='w',encoding='utf-8') as f:
                 json.dump(self.data, f, indent=4, ensure_ascii=False)
-            self.master.title("SII-METER ver.3.1.2 - 保存しました")
+            self.master.title("SII-METER ver."+ver+" - 保存しました")
             time.sleep(1)
-            self.master.title("SII-METER ver.3.1.2")
+
+            self.check_save()
+    
+    #お仕事回数が保存されているかチェック
+    def check_save(self):
+        if self.num != self.data["oshigoto"]:
+            self.master.title("SII-METER ver."+ver+" - 未保存")
+            return False
+        else:
+            self.master.title("SII-METER ver."+ver)
+            return True
+    
+
 
 
 # 回数の読み込み
@@ -353,23 +396,28 @@ def main():
     #イベント
     #root == siimeter.master
     sii_meter.master.bind(
-        "<ButtonPress>", # 受付けるイベント
+        "<ButtonPress>", # 受付けるイベント<Double-1>
         sii_meter.create_config # そのイベント時に実行する関数
     )
 
     sii_meter.master.bind(
-        "<Shift-Alt-Up>", # 受付けるイベント
+        "<Control-Up>", # 受付けるイベント
         lambda event: sii_meter.add_num_main(1) # そのイベント時に実行する関数
     )
 
     sii_meter.master.bind(
-        "<Shift-Alt-Down>", # 受付けるイベント
+        "<Control-Down>", # 受付けるイベント
         lambda event: sii_meter.add_num_main(-1) # そのイベント時に実行する関数
     )
 
     sii_meter.master.bind(
         "<Control-s>", # 受付けるイベント
         sii_meter.event_save # そのイベント時に実行する関数
+    )
+
+    sii_meter.master.bind(
+        "<Control-z>", # 受付けるイベント
+        sii_meter.undo_num # そのイベント時に実行する関数
     )
 
     sii_meter.master.protocol("WM_DELETE_WINDOW", sii_meter.closing2)
